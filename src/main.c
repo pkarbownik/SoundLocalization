@@ -39,12 +39,15 @@ SOFTWARE.
 
 /* Private macro */
 /* Private variables */
+uint16_t dmaBuffer[470];
+#define DMA_BUFFER_LENGTH 470
 /* Private function prototypes */
 void SystemClock_Config(void);
 void Error_Handler(void);
 extern void GRAPHICS_HW_Init(void);
 extern void GRAPHICS_Init(void);
 extern void MainTask(void);
+extern void SAIData(void);
 static void Template_Task(void const * argument);
 static void GUI_Task ( void const * argument);
 /* Private functions */
@@ -60,13 +63,10 @@ static void Template_Task(void const * argument) {/*read in analog input(s)*/
 }
 
 void GUI_Task ( void const * argument){ /* Gui background Task */
-	int xPos, yPos;
 	GRAPHICS_Init();
-	xPos = LCD_GetXSize() / 2;
-	yPos = LCD_GetYSize() / 3;
-	GUI_SetFont(GUI_FONT_COMIC24B_ASCII);
-	GUI_DispStringHCenterAt("Hello world!", xPos, yPos);
+	MainTask();
 	while (1) {
+		//sSAIData();
 		GUI_Exec();
 		vTaskDelay(10);
 	}
