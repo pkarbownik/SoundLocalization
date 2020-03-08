@@ -28,9 +28,13 @@ SOFTWARE.
 */
 
 /* Includes */
+#include "main.h"
+#include "crc.h"
 #include "stm32f7xx.h"
 #include "stm32f7xx_hal.h"
 /* Private includes ----------------------------------------------------------*/
+#include "GUI.h"
+#include "STemwin_wrapper.h"
 #include "cmsis_os.h"
 
 /* Private macro */
@@ -38,7 +42,11 @@ SOFTWARE.
 /* Private function prototypes */
 void SystemClock_Config(void);
 void Error_Handler(void);
+extern void GRAPHICS_HW_Init(void);
+extern void GRAPHICS_Init(void);
+extern void MainTask(void);
 static void Template_Task(void const * argument);
+static void GUI_Task ( void const * argument);
 /* Private functions */
 
 void vApplicationTickHook(void) {
@@ -48,6 +56,19 @@ void vApplicationTickHook(void) {
 static void Template_Task(void const * argument) {/*read in analog input(s)*/
 	while (1) {
 		vTaskDelay(50);
+	}
+}
+
+void GUI_Task ( void const * argument){ /* Gui background Task */
+	int xPos, yPos;
+	GRAPHICS_Init();
+	xPos = LCD_GetXSize() / 2;
+	yPos = LCD_GetYSize() / 3;
+	GUI_SetFont(GUI_FONT_COMIC24B_ASCII);
+	GUI_DispStringHCenterAt("Hello world!", xPos, yPos);
+	while (1) {
+		GUI_Exec();
+		vTaskDelay(10);
 	}
 }
 
@@ -76,9 +97,10 @@ int main(void)
 	*  E.g.  SCB->VTOR = 0x20000000;
 	*/
 	/* TODO - Add your application code here */
-
+	MX_CRC_Init();
 	/* Infinite loop */
 	xTaskCreate ((TaskFunction_t) Template_Task, "Template_Task", 1024, NULL, 1, NULL);
+	xTaskCreate ((TaskFunction_t) GUI_Task, "GUI_Task", 1024, NULL, 1, NULL);
 	vTaskStartScheduler ();
 }
 
@@ -133,6 +155,7 @@ void SystemClock_Config(void) {
 		Error_Handler();
 	}
 }
+
 /* USER CODE BEGIN 4 */
 /**
  * @brief  This function is executed in case of error occurrence.
