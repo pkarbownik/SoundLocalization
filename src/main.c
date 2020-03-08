@@ -30,8 +30,7 @@ SOFTWARE.
 /* Includes */
 #include "main.h"
 #include "crc.h"
-#include "stm32f7xx.h"
-#include "stm32f7xx_hal.h"
+#include "stm32746g_discovery_audio.h"
 /* Private includes ----------------------------------------------------------*/
 #include "GUI.h"
 #include "STemwin_wrapper.h"
@@ -39,6 +38,7 @@ SOFTWARE.
 
 /* Private macro */
 /* Private variables */
+extern SAI_HandleTypeDef haudio_in_sai;
 uint16_t dmaBuffer[470];
 #define DMA_BUFFER_LENGTH 470
 /* Private function prototypes */
@@ -50,6 +50,7 @@ extern void MainTask(void);
 extern void SAIData(void);
 static void Template_Task(void const * argument);
 static void GUI_Task ( void const * argument);
+static void Signal_Task ( void const * argument);
 /* Private functions */
 
 void vApplicationTickHook(void) {
@@ -66,9 +67,17 @@ void GUI_Task ( void const * argument){ /* Gui background Task */
 	GRAPHICS_Init();
 	MainTask();
 	while (1) {
-		//sSAIData();
+		SAIData();
 		GUI_Exec();
 		vTaskDelay(10);
+	}
+}
+
+void Signal_Task ( void const * argument){/*Collect sample*/
+	BSP_AUDIO_IN_InitEx(INPUT_DEVICE_DIGITAL_MICROPHONE_2, DEFAULT_AUDIO_IN_FREQ,85, DEFAULT_AUDIO_IN_CHANNEL_NBR);
+	HAL_SAI_Receive_DMA(&haudio_in_sai, (uint8_t*)dmaBuffer,DMA_BUFFER_LENGTH );
+	while(1){
+		vTaskDelay(100);
 	}
 }
 
@@ -101,6 +110,7 @@ int main(void)
 	/* Infinite loop */
 	xTaskCreate ((TaskFunction_t) Template_Task, "Template_Task", 1024, NULL, 1, NULL);
 	xTaskCreate ((TaskFunction_t) GUI_Task, "GUI_Task", 1024, NULL, 1, NULL);
+	xTaskCreate ((TaskFunction_t) Signal_Task, "Signal_Task", 1024, NULL, 1, NULL);
 	vTaskStartScheduler ();
 }
 
